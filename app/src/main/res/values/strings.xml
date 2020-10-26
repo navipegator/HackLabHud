@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">HackLab1</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="camera">Camera</string>
+    <string name="sensors">Sensors</string>
+    <string name="tbd">TBD</string>
+    <string name="title_activity_camera_preview">FullscreenActivity</string>
+</resources>
