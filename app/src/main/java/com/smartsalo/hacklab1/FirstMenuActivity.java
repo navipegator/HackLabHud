@@ -1,20 +1,22 @@
 package com.smartsalo.hacklab1;
 
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.UUID;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+// keys remote
+//s = network
+//d = camera
+//x = camera side outter button
+//w= neywork side ou
+//q = network side middle
+//z= camera side middle
 
 /**
  * full-screen activity that enables user to navigate in application.
@@ -27,7 +29,7 @@ public class FirstMenuActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_fullscreen);
+        setContentView(R.layout.activity_firstmenu);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.hide();
@@ -42,35 +44,12 @@ public class FirstMenuActivity extends AppCompatActivity {
             }
         });
 
-        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        if (adapter != null) {
-
-
-            final UUID SERIAL_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //UUID for serial connection
-            String mac = "98:D3:32:30:75:1B"; //my laptop's mac adress
-            BluetoothDevice device = adapter.getRemoteDevice(mac); //get remote device by mac, we assume these two devices are already paired
-
-
-            // Get a BluetoothSocket to connect with the given BluetoothDevice
-            BluetoothSocket socket = null;
-            OutputStream out = null;
-            try {
-                socket = device.createRfcommSocketToServiceRecord(SERIAL_UUID);
-            } catch (IOException e) {
-            }
-
-            try {
-                socket.connect();
-                out = socket.getOutputStream();
-                //now you can use out to send output via out.write
-                out.write(69);
-            } catch (IOException e) {
-            }
-        }  }
+    }
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
+        // navigateToCameraPreview();
 
     }
 
@@ -80,7 +59,7 @@ public class FirstMenuActivity extends AppCompatActivity {
             case KeyEvent.KEYCODE_D:
                 navigateToCameraPreview();
                 return true;
-            case KeyEvent.KEYCODE_A:
+            case KeyEvent.KEYCODE_S:
                 navigateToSensorPreview();
                 return true;
 

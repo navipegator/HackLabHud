@@ -9,6 +9,9 @@ import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCapture.OnImageSavedCallback;
+import androidx.camera.core.ImageCaptureException;
+import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.extensions.HdrImageCaptureExtender;
 import androidx.camera.lifecycle.ProcessCameraProvider;
@@ -20,10 +23,16 @@ import androidx.lifecycle.LifecycleOwner;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
+import android.media.Image;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
+import android.util.Size;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -41,11 +50,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -54,7 +66,8 @@ import java.util.concurrent.ExecutionException;
 public class CameraPreviewActivity extends AppCompatActivity {
     private int REQUEST_CODE_PERMISSIONS = 1001;
     private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
-
+    private Executor executor = Executors.newSingleThreadExecutor();
+    private ImageCapture imageCapture;
     PreviewView mPreviewView;
     ImageView captureImage;
 
@@ -67,7 +80,6 @@ public class CameraPreviewActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_camera_preview);
         mPreviewView = findViewById(R.id.previewView);
-        //captureImage = findViewById(R.id.captureImg);
 
         if(allPermissionsGranted()){
             startCamera(); //start camera if permission has been granted by user
@@ -99,8 +111,8 @@ public class CameraPreviewActivity extends AppCompatActivity {
 
     void bindPreview(@NonNull ProcessCameraProvider cameraProvider) {
 
-        Preview preview = new Preview.Builder()
-                .build();
+        Preview preview = new Preview.Builder().setTargetResolution(new Size(800,480))
+               .build();
 
 
         CameraSelector cameraSelector = new CameraSelector.Builder()
@@ -110,32 +122,44 @@ public class CameraPreviewActivity extends AppCompatActivity {
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
                 .build();
 
-        ImageCapture.Builder builder = new ImageCapture.Builder().setTargetRotation(Surface.ROTATION_180);
 
-        //Vendor-Extensions (The CameraX extensions dependency in build.gradle)
-        HdrImageCaptureExtender hdrImageCaptureExtender = HdrImageCaptureExtender.create(builder);
 
-        // Query if extension is available (optional).
-        if (hdrImageCaptureExtender.isExtensionAvailable(cameraSelector)) {
-            // Enable the extension if available.
-            hdrImageCaptureExtender.enableExtension(cameraSelector);
-        }
 
-        final ImageCapture imageCapture = builder
-                .setTargetRotation(this.getWindowManager().getDefaultDisplay().getRotation())
-                .build();
         preview.setSurfaceProvider(mPreviewView.createSurfaceProvider());
+        ImageCapture.Builder builder = new ImageCapture.Builder();//.setTargetRotation(Surface.ROTATION_180);
+        imageCapture = builder
+                .setTargetRotation(/*this.getWindowManager().getDefaultDisplay().getRotation()*/Surface.ROTATION_0)
+                .build();
 
         Camera camera = cameraProvider.bindToLifecycle((LifecycleOwner)this, cameraSelector, preview, imageAnalysis, imageCapture);
+       // Camera camera = cameraProvider.bindToLifecycle((LifecycleOwner)this, cameraSelector, preview, imageAnalysis, imageCapture);
+        // Create output options object which contains file + metadata
 
+    }
+    public void sendFullPicture(){
+        Log.i("Hacklab","SendFullPicture");
+        ImageCapture.Builder builder = new ImageCapture.Builder();//.setTargetRotation(Surface.ROTATION_180);
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
-        new Timer().scheduleAtFixedRate(new TimerTask(){
-            @Override
-            public void run(){
-                //uploadBitmap(mPreviewView.getBitmap());
-            }
-        },0,5000);
+        final ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(stream).build();
+        imageCapture.takePicture (outputOptions,executor,new ImageCapture.OnImageSavedCallback() {
+                    @Override
+                    public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                        Log.i("Hacklab","Uploadinf");
+                        uploadImage(stream.toByteArray());
+                    }
 
+                    @Override
+                    public void onError(ImageCaptureException error) {
+                        Log.e("Hacklab",error.getMessage());
+                        // insert your code here.
+                    }
+                }
+        );
+
+    }
+    public void sendPreviewPicture(){
+        uploadBitmap(mPreviewView.getBitmap());
     }
 
     public String getBatchDirectoryName() {
@@ -171,14 +195,68 @@ public class CameraPreviewActivity extends AppCompatActivity {
             }
         }
     }
+    private void uploadImage(final byte[] image) {
 
+        //getting the tag from the edittext
+        final String tags = "tageja";
+
+        //our custom volley request
+        VolleyMultipartRequest volleyMultipartRequest = new VolleyMultipartRequest(Request.Method.POST, "http://65.109.137.148/upload1",
+                new Response.Listener<NetworkResponse>() {
+                    @Override
+                    public void onResponse(NetworkResponse response) {
+                      /*  try {
+                            JSONObject obj = new JSONObject(new String(response.data));
+                            Toast.makeText(getApplicationContext(), obj.getString("message"), Toast.LENGTH_SHORT).show();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }*/
+                        Log.i("p1",response.data.toString());
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                }) {
+
+            /*
+             * If you want to add more parameters with the image
+             * you can do it here
+             * here we have only one parameter with the image
+             * which is tags
+             * */
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+                //params.put("file", tags);
+                return params;
+            }
+
+            /*
+             * Here we are passing image by renaming it with a unique name
+             * */
+            @Override
+            protected Map<String, DataPart> getByteData() {
+                Map<String, DataPart> params = new HashMap<>();
+                long imagename = System.currentTimeMillis();
+
+                params.put("file", new DataPart(imagename + ".png",image));
+                return params;
+            }
+        };
+
+        //adding the request to volley
+        Volley.newRequestQueue(this).add(volleyMultipartRequest);
+    }
     private void uploadBitmap(final Bitmap bitmap) {
 
         //getting the tag from the edittext
         final String tags = "tageja";
 
         //our custom volley request
-        VolleyMultipartRequest volleyMultipartRequest = new VolleyMultipartRequest(Request.Method.POST, "http://192.168.10.54:81/upload",
+        VolleyMultipartRequest volleyMultipartRequest = new VolleyMultipartRequest(Request.Method.POST, "http://65.109.137.147:81/upload1",//http://65.21.104.214:81/upload
                 new Response.Listener<NetworkResponse>() {
                     @Override
                     public void onResponse(NetworkResponse response) {
@@ -245,6 +323,12 @@ public class CameraPreviewActivity extends AppCompatActivity {
         switch (keyCode) {
             case KeyEvent.KEYCODE_Q:
                 navigateToFirstMenu();
+                return true;
+            case KeyEvent.KEYCODE_S:
+                sendFullPicture();
+                return true;
+            case KeyEvent.KEYCODE_D:
+                sendPreviewPicture();
                 return true;
             default:
                 return super.onKeyUp(keyCode, event);

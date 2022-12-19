@@ -11,7 +11,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.view.KeyEvent;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 public class SensorActivity extends AppCompatActivity implements SensorEventListener {
@@ -21,7 +20,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_first);
+        setContentView(R.layout.activity_sensor);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.hide();
