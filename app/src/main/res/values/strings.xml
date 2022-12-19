@@ -5,5 +5,6 @@
     <string name="camera">Camera</string>
     <string name="sensors">Sensors</string>
     <string name="tbd">TBD</string>
+    <string name="savedisk">Save to Disk</string>
     <string name="title_activity_camera_preview">FullscreenActivity</string>
 </resources>

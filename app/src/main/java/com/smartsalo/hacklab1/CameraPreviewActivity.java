@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
 
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -31,6 +32,7 @@ import android.media.Image;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
 import android.view.KeyEvent;
@@ -50,6 +52,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -169,10 +173,40 @@ public class CameraPreviewActivity extends AppCompatActivity {
         uploadImage(getFileDataFromDrawable(mPreviewView.getBitmap()));
     }
 
+
+    private void saveFullPictureToDisk() throws FileNotFoundException {
+        Log.i("HackHud","SaveFullPicture");
+        ImageCapture.Builder builder = new ImageCapture.Builder();//.setTargetRotation(Surface.ROTATION_180);
+        //ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, "NEW_IMAGE");
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
+        String name="kuva";
+        File photo = new File("/storage/emulated/legacy/DCIM", name + ".jpg");
+        if (photo.exists()) photo.delete();
+        FileOutputStream fos = new FileOutputStream(photo.getPath());
+
+        final ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(fos).build();
+        imageCapture.takePicture (outputOptions,executor,new ImageCapture.OnImageSavedCallback() {
+                    @Override
+                    public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                        Log.i("HackHud","Saved to Disk");
+
+                    }
+
+                    @Override
+                    public void onError(ImageCaptureException error) {
+                        Log.e("HackHud",error.getMessage());
+                        // insert your code here.
+                    }
+                }
+        );
+
+    }
     public String getBatchDirectoryName() {
 
         String app_folder_path = "";
-        app_folder_path = Environment.getExternalStorageDirectory().toString() + "/images";
+        app_folder_path = Environment.getDataDirectory().toString() + "/images";
         File dir = new File(app_folder_path);
         if (!dir.exists() && !dir.mkdirs()) {
 
@@ -266,6 +300,17 @@ public class CameraPreviewActivity extends AppCompatActivity {
             case KeyEvent.KEYCODE_D:
                 sendPreviewPicture();
                 return true;
+            case KeyEvent.KEYCODE_W:
+
+                    try {
+                        saveFullPictureToDisk();
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+
+
+                return true;
+
             default:
                 return super.onKeyUp(keyCode, event);
         }
