@@ -290,6 +290,13 @@ public class CameraPreviewActivity extends AppCompatActivity {
     }
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+        // keys remote
+//s = network
+//d = camera
+//x = camera side outter button
+//w= neywork side ou
+//q = network side middle
+//z= camera side middle
         switch (keyCode) {
             case KeyEvent.KEYCODE_Q:
                 navigateToFirstMenu();

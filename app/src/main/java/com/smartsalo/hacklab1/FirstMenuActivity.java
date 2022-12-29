@@ -62,7 +62,12 @@ public class FirstMenuActivity extends AppCompatActivity {
             case KeyEvent.KEYCODE_S:
                 navigateToSensorPreview();
                 return true;
-
+            case KeyEvent.KEYCODE_X:
+                navigateToBt();
+                return true;
+            case KeyEvent.KEYCODE_W:
+                navigateToMotion();
+                return true;
             default:
                 return super.onKeyUp(keyCode, event);
         }
@@ -74,6 +79,14 @@ public class FirstMenuActivity extends AppCompatActivity {
     }
     private void navigateToSensorPreview() {
         Intent intent = new Intent(this, SensorActivity.class);
+        startActivity(intent);
+    }
+    private void navigateToBt() {
+        Intent intent = new Intent(this, BtActivity.class);
+        startActivity(intent);
+    }
+    private void navigateToMotion() {
+        Intent intent = new Intent(this, MotionCameraActivity.class);
         startActivity(intent);
     }
 }
